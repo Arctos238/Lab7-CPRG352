@@ -41,13 +41,11 @@ public class UserServlet extends HttpServlet {
             throws ServletException, IOException {
         RoleService roleService = new RoleService();
         roles = roleService.getAll();
-        
-        
-        
+
         userService = new UserService();
-        
+
         users = userService.getAll();
-        
+
         if (users == null) {
             users = new Vector<User>();
         }
@@ -70,7 +68,7 @@ public class UserServlet extends HttpServlet {
             }
             request.getSession().setAttribute("selectedUser", user);
         } else if (action != null && action.equals("delete")) {
-            
+
             String userEmail = request.getParameter("user").replaceAll("\\s+", "+");
             User user = null;
 
@@ -127,10 +125,17 @@ public class UserServlet extends HttpServlet {
                     newRole = roles.get(i);
                 }
             }
-            
+
+            boolean userAlreadyExists = false;
+
+            for (User user : users) {
+                if (inputEmail.equals(user.getEmail())) {
+                    userAlreadyExists = true;
+                }
+            }
+
             String message = null;
-            
-            
+
             if (inputEmail.length() == 0) {
                 validInputs = false;
                 message = "No email entered or email is invalid";
@@ -152,20 +157,26 @@ public class UserServlet extends HttpServlet {
             } else if (inputActive.equals("Is active...")) {
                 validInputs = false;
                 message = "Active field not selected";
+            } else if (userAlreadyExists) {
+                validInputs = false;
+                message = "That email is already in use";
             } else if (validInputs) {
                 User user = new User(inputEmail, booleanInputActive, inputFirstName, inputLastName, inputPassword);
                 user.setRole(newRole);
-                
+
+                if (users.contains(user)) {
+
+                }
                 Boolean created = userService.createUser(user);
-                
-                if(created) {
+
+                if (created) {
                     message = "Success";
                 } else {
                     message = "Unsuccessful";
                 }
-                
+
             }
-            
+
             request.getSession().setAttribute("message", message);
             response.sendRedirect("user");
             return;
@@ -185,7 +196,7 @@ public class UserServlet extends HttpServlet {
             String selectedActive = request.getParameter("selectedActive");
 
             Role newRole = null;
-            
+
             if (selectedRole.startsWith("Current:")) {
                 newRole = selectedUser.getRole();
             } else {
@@ -197,12 +208,11 @@ public class UserServlet extends HttpServlet {
             }
 
             boolean newActive = selectedActive.equals("Yes");
-            
+
             if (selectedActive.startsWith("Current:")) {
-                
+
                 newActive = selectedUser.getActive();
             }
-            
 
             selectedUser.setFirstName(selectedFirstName);
             selectedUser.setLastName(selectedLastName);
